@@ -1,0 +1,32 @@
+Goal: Create a Risk Factor Model using PCA
+
+Chosen portfolio: S&P500
+
+
+
+```{r}
+#download packages
+library(tidyquant) #https://business-science.github.io/tidyquant/
+library(tidyverse) #https://tidyverse.org/
+library(Matrix)    #https://codeberg.org/jaganmn/Matrix
+```
+
+```{r}
+#download index of s&p500
+```
+
+```{r}
+#clean the dataframe
+```
+
+```{r}
+#set up the components
+```
+
+```{r}
+#create covariance matrix
+```
+
+```{r}
+#create the model
+```
