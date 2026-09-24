@@ -13,6 +13,11 @@ library(Matrix)    #https://codeberg.org/jaganmn/Matrix
 
 ```{r}
 #download index of s&p500
+basket <- tq_index("S&P500")
+```
+
+```{r}
+head(basket)
 ```
 
 ```{r}
