@@ -23,16 +23,37 @@ write.csv(basket, "sp500_basket.csv", row.names = FALSE)
 
 ```{r}
 #clean the dataframe
- 
+df <- read_csv("sp500_basket.csv")
+head(df)
+
+colSums(is.na(df)) #check for NA
+colSums(df == "" | df == " " | df == "-") #we know sector has missing values, but not NA. check for dash/ empty space
+
+#convert non-NA missing values to NA
+df_EmptyStr_to_NA <- df |> 
+    mutate(sector = na_if(sector, ""),
+        sector = na_if(sector, "-")) |>
+    filter(!is.na(sector)) |> 
+head(df_EmptyStr_to_NA) 
+
+#to add for each:
+#momentum var. 
+#macd_hist: by proxy, macd_line, macd_signal
+#P/E ratio
+#Liquidity ratio 
+#Volume of trades (somewhat accounted for in momentum - check correlation)
+#MAYBE: Sector
+
+```
+
+```{r}
+#create covariance matrix
 ```
 
 ```{r}
 #set up the components
 ```
 
-```{r}
-#create covariance matrix
-```
 
 ```{r}
 #create the model
