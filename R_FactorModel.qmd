@@ -18,10 +18,12 @@ basket <- tq_index("S&P500")
 
 ```{r}
 head(basket)
+write.csv(basket, "sp500_basket.csv", row.names = FALSE)
 ```
 
 ```{r}
 #clean the dataframe
+ 
 ```
 
 ```{r}
