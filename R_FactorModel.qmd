@@ -24,26 +24,55 @@ write.csv(basket, "sp500_basket.csv", row.names = FALSE)
 ```{r}
 #clean the dataframe
 df <- read_csv("sp500_basket.csv")
-head(df)
 
-colSums(is.na(df)) #check for NA
-colSums(df == "" | df == " " | df == "-") #we know sector has missing values, but not NA. check for dash/ empty space
+colSums(is.na(df))
+colSums(df == "" | df == " " | df == "-", na.rm = TRUE)
 
-#convert non-NA missing values to NA
-df_EmptyStr_to_NA <- df |> 
-    mutate(sector = na_if(sector, ""),
-        sector = na_if(sector, "-")) |>
-    filter(!is.na(sector)) |> 
-head(df_EmptyStr_to_NA) 
+df_clean <- df |>
+  mutate(sector = na_if(sector, ""),
+         sector = na_if(sector, "-"))
+df_clean$sector <- NULL
+
+head(df_clean)
+```
+
+```{r}
+#the current data set is for right now. I need historical returns from last 10 years such that I cover a full business cycle, and have enough data for PCA. get daily close price and then convert into % daily change
+```
+
+```{r, maybe}
+#more variables:
 
 #to add for each:
+#sector
 #momentum var. 
 #macd_hist: by proxy, macd_line, macd_signal
 #P/E ratio
-#Liquidity ratio 
-#Volume of trades (somewhat accounted for in momentum - check correlation)
-#MAYBE: Sector
+#PEG ratio
+#growth rate
+#EPS
+#Liquidity ratio - current, quick, cash, npv
+#MAYBE: Volume of trades (somewhat accounted for in momentum - check correlation)
+#market cap
 
+#as of sept 24,2026:
+sector_market_cap_ls <- [(Info_Tech, Fin_Serv, Industrials, Communications, Healthcare, Discretion_Consumer,
+                        Staple_Consumer, Energy, Raw_Goods, Utilities), 
+                        (33.5, 13.1, 10.3, 9.4, 9.3, 9.0, 4.2, 4.8, 2.6, 1.9, 1.8)]
+
+df_with_ratios <- df_EmptyStr_to_NA |> 
+    mutate(
+        pe = (price/earnings),
+        eps = (earnings / num_shares),
+        peg = (pe/growth_rate),
+        current = (cur_asset/cur_liab),
+        quick = ((cash + mark_secur + acc_rec)/cur_liab),
+        cash = ((cash + cash_equiv)/cur_liab), 
+        operating_nwc = (cur_asset - cash)-(cur_liab - debt),
+        debt = (tot_liab/tot_asset),
+        de = (tot_liab/tot_share_equity),
+        TIE = (EBIT/int_expense),
+        )
 ```
 
 ```{r}
