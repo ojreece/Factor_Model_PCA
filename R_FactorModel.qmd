@@ -105,7 +105,7 @@ dev <- sweep(A_train, 2, xbar)
 cov_A <- t(dev) %*% dev / (nrow(dev) - 1) 
 #where t(dev) is the transpose: TxN --> NxT, %*% is matrix multiplication
 
-all.equal(cov_A, cov(A_train))
+all.equal(cov_A, cov(A_train)) #this needs to be true to make sure I did the above right.
 ```
 
 ```{r}
