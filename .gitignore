@@ -1,3 +1,6 @@
 sp500_prices.csv
 sp500_prices.rds
 .vdoc.*
+
+/.quarto/
+**/*.quarto_ipynb

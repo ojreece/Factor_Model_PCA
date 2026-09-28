@@ -47,29 +47,74 @@ tickers <- df_clean |>
 #get the data. 500 tickers is a lot. make a saved file so don't need to call yfinance everytime. use .rds bc faster than .csv and keeps data types. 
 if (!file.exists("sp500_prices.rds")) 
     { 
-    prices <- tq_get(tickers,
+    historical_prices <- tq_get(tickers,
                 get  = "stock.prices",
                 from = Sys.Date() - years(10),
                 to   = Sys.Date())
-    saveRDS(prices, "sp500_prices.rds") #here we save the data. 
+    saveRDS(historical_prices, "sp500_prices.rds") #save the data so don't need to re-do each time (caching = efficiency)
     } else 
         {
         historical_prices <- readRDS("sp500_prices.rds")
         }
 if (!file.exists("sp500_prices.csv"))
     {
-    csv_hist_price <- write_csv(historical_prices, "sp500_prices.csv") #for human readability
+    historical_prices <- write_csv(historical_prices, "sp500_prices.csv") #for human readability
     }
-head(csv_hist_price)
+head(historical_prices)
 ```
 
 
 ```{r}
 #create covariance matrix
+returns <- historical_prices |>
+  group_by(symbol) |>
+  arrange(date, .by_group = TRUE) |>
+  mutate(ret = adjusted / lag(adjusted) - 1) |> #DoD price return
+  ungroup() |>
+  filter(!is.na(ret)) |>
+  select(date, symbol, ret)
+
+returns_wide <- returns |>
+  pivot_wider(names_from = symbol, values_from = ret) |>
+  arrange(date)
+
+#keep stocks with >= 98% of days in the 10yr window --> 10 years bc approx. 1 business cycle
+coverage <- colMeans(!is.na(select(returns_wide, -date))) 
+keep <- names(coverage)[coverage >= 0.98]
+returns_wide <- returns_wide |>
+    select(date, all_of(keep)) |>
+    drop_na()
+
+#use matrix naming convention: A for return matrix
+A <- as.matrix(select(returns_wide, -date))
+rownames(A) <- as.character(returns_wide$date)
+head(A) 
+
+split   <- floor(0.8 * nrow(A))
+A_train <- A[1:split, ]
+A_test  <- A[(split + 1):nrow(A), ]
+
+#now calculate the cov() 
+#mean of each column: xbar_j = sum(x_j) / n
+xbar = colMeans(A_train)
+#deviation from the mean: y_j = x_j - xbar_j
+dev <- sweep(A_train, 2, xbar)
+#diagonal (variance): y_i * y_j   = y_i^2 --> since diagonal y_i = y_j so y_i * y_j = y_i * y_i = y_i^2
+#off-diagonal (covariance): y_i * y_j --> y_i != y_j here
+#sum over days, divide by n-1:  SUM_ij = [sum(y_i * y_j) / (n - 1)]
+cov_A <- t(dev) %*% dev / (nrow(dev) - 1) 
+#where t(dev) is the transpose: TxN --> NxT, %*% is matrix multiplication
+
+all.equal(cov_A, cov(A_train))
 ```
 
 ```{r}
 #set up the components
+
+#cov() to corr(): sd = sqrt(variance) --> sigma vs sigma^2
+#only want the variance => diagonal of the matrix. rest is covariance
+stdev_A <- sqrt(diag(cov_A)) 
+
 ```
 
 ```{r}
