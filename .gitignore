@@ -4,3 +4,4 @@ sp500_prices.rds
 
 /.quarto/
 **/*.quarto_ipynb
+.Rproj.user

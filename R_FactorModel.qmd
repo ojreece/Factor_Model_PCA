@@ -88,7 +88,7 @@ returns_wide <- returns_wide |>
 #use matrix naming convention: A for return matrix
 A <- as.matrix(select(returns_wide, -date))
 rownames(A) <- as.character(returns_wide$date)
-head(A) 
+head(A, 15)
 
 split   <- floor(0.8 * nrow(A))
 A_train <- A[1:split, ]
@@ -113,10 +113,88 @@ all.equal(cov_A, cov(A_train)) #this needs to be true to make sure I did the abo
 
 #cov() to corr(): sd = sqrt(variance) --> sigma vs sigma^2
 #only want the variance => diagonal of the matrix. rest is covariance
-stdev_A <- sqrt(diag(cov_A)) 
 
+#find std dev
+stdev_A <- sqrt(diag(cov_A)) 
+#standardise such tht volatility differences don't impact results. 
+#=(value - mean) / stdev
+stdev_A_standard <- sweep(dev, 2, stdev_A, "/")
+ 
+#mutliply matrices together (%*%) to get correlation matrix
+cor_A <- t(stdev_A_standard) %*% stdev_A_standard / (nrow(stdev_A_standard) - 1)
+
+#test
+all.equal(cor_A, cor(A_train))
+```
+
+
+#based on investment apps class -- 
+factor in size (market cap) and Book-Market Ratio
+exptected return = risk free rate + B(rm - rf) + B2(size related factor) + B3(book-market related factor) + B4(growth)
+
+NOTE:
+xbar = colMeans(A_train)
+dev <- sweep(A_train, 2, xbar)
+cov_A <- t(dev) %*% dev / (nrow(dev) - 1) 
+all.equal(cov_A, cov(A_train)) 
+stdev_A <- sqrt(diag(cov_A)) 
+stdev_A_standard <- sweep(dev, 2, stdev_A, "/")
+
+all can condense down to:
+A_train_scaled <- scale(A_train, center = TRUE, scale = TRUE)
+
+
+```{r}
+#gemini helping me resolve mutlicollinearity:
+qr_decomposition <- qr(cor_A)
+is_dependent <- qr_decomposition$pivot[seq(qr_decomposition$rank + 1, ncol(cor_A))]
+
+# Print the names of the columns you need to drop
+if(length(is_dependent) > 0) {
+  problem_columns <- colnames(cor_A)[is_dependent]
+  print("Drop these specific columns to fix the singularity:")
+  print(problem_columns)
+} else {
+  print("No exact linear dependencies found. The matrix is just highly ill-conditioned overall.")
+}
+
+install.packages("corpcor")
+library(corpcor)
+
+# Pass your original daily returns data frame/matrix into this function:
+# (Assuming 'returns_data' is your matrix of asset returns before computing cv)
+cv_shrunk <- cov.shrink(A_train)
+
+# This matrix is guaranteed to be stable and invertible
+inv_cv <- solve(cv_shrunk)
 ```
 
 ```{r}
-#create the model
+#run PCA on the correlation matrix
+install.packages("psych")
+library(psych)
 ```
+
+```{r}
+principal(cor_A, 14, residuals = TRUE, scores = TRUE)
+```
+
+
+Notes:
+SS Loadings = eigenvectors for each PC --> amount of total variance in the original variables captured by that component.
+proportion var = % of total dataset variance explained by PC
+cumulative var = cumulative % explained by PCs
+proportion explained = proportion of variance explained relative to PCs (so % of cum_var)
+cumulative proportion = cumulative % variance explained relative to PCs (so cumulative % of cum_var )
+mean item complexity = avg number of PCs each var contributes to significantly
+Root Mean Square of the Residuals = difference between observed vs expected corr matrix. lower = better = closer fit
+
+
+Because cumulative var struggles to meaningfully break 60%, we need to take that into account moving forward. In other words, further finding significance is limited. 
+
+Based on the PCA, PC1 has a proportional variance of 17% meaning our market risk (or market variance) is around 17%. Anything above that threshold is non-systemmic.
+
+
+
+
+
