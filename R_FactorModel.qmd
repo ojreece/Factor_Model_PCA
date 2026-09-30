@@ -171,12 +171,21 @@ inv_cv <- solve(cv_shrunk)
 
 ```{r}
 #run PCA on the correlation matrix
-install.packages("psych")
-library(psych)
-```
+# 1. Fit PCA on pre-scaled data
+pca_fit <- prcomp(A_train, center = FALSE, scale. = FALSE)
 
-```{r}
-principal(cor_A, 14, residuals = TRUE, scores = TRUE)
+# 2. Extract top 14 factor scores (X) and loadings (eigenvectors)
+K <- 14
+factor_scores_train <- pca_fit$x[, 1:K]
+loadings <- pca_fit$rotation[, 1:K]
+
+# 3. Fit the multivariate Factor Model across all assets
+PC_Model <- lm(A_train ~ factor_scores_train)
+
+# 4. Extract estimated factor betas for all assets
+betas <- coef(PC_Model)[-1, ]  # Excludes the intercept
+rownames(betas) <- paste0("PC", 1:K)
+
 ```
 
 
@@ -193,6 +202,7 @@ Root Mean Square of the Residuals = difference between observed vs expected corr
 Because cumulative var struggles to meaningfully break 60%, we need to take that into account moving forward. In other words, further finding significance is limited. 
 
 Based on the PCA, PC1 has a proportional variance of 17% meaning our market risk (or market variance) is around 17%. Anything above that threshold is non-systemmic.
+
 
 
 
