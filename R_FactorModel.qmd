@@ -171,19 +171,14 @@ inv_cv <- solve(cv_shrunk)
 
 ```{r}
 #run PCA on the correlation matrix
-# 1. Fit PCA on pre-scaled data
 pca_fit <- prcomp(A_train, center = FALSE, scale. = FALSE)
-
-# 2. Extract top 14 factor scores (X) and loadings (eigenvectors)
 K <- 14
 factor_scores_train <- pca_fit$x[, 1:K]
 loadings <- pca_fit$rotation[, 1:K]
 
-# 3. Fit the multivariate Factor Model across all assets
 PC_Model <- lm(A_train ~ factor_scores_train)
 
-# 4. Extract estimated factor betas for all assets
-betas <- coef(PC_Model)[-1, ]  # Excludes the intercept
+betas <- coef(PC_Model)[-1, ] 
 rownames(betas) <- paste0("PC", 1:K)
 
 ```
