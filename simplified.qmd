@@ -1,0 +1,134 @@
+---
+title: "simplified"
+format: html
+---
+
+Simple model build to familiarize myself with concepts. I was getting lost in the process doing the SP500. Will scale up after I get the basics down.
+
+```{r}
+#packages
+library(tidyquant)
+library(tidyverse)
+library(dplyr)
+```
+
+```{r}
+# download market returns for portfolio --> lets just use 3-4 stocks to keep it simple
+# [ (n^2 - n) / 2 ] + n days, where N = number stocks in portfolio
+# GOOG, BG, RTX --> different sectors so have even less correlation (in theory)
+
+
+goog <- tq_get("GOOG")
+bg <- tq_get("BG")
+rtx <- tq_get("RTX")
+
+goog_1 <- goog |> mutate(daily_ret = ((adjusted - lag(adjusted))/lag(adjusted))*100)
+bg_1 <- bg |> mutate(daily_ret = ((adjusted - lag(adjusted))/lag(adjusted))*100)
+rtx_1 <- rtx |> mutate(daily_ret = ((adjusted - lag(adjusted))/lag(adjusted))*100)
+
+head(goog_1)
+head(bg_1)
+head(rtx_1)
+```
+
+
+```{r}
+returns_wide <- goog_1 |> select(date, GOOG = daily_ret) |>
+  inner_join(bg_1 |> select(date, BG = daily_ret), by = "date") |>
+  inner_join(rtx_1 |> select(date, RTX = daily_ret), by = "date") |>
+  drop_na()
+```
+
+```{r}
+#standarise the data. call it Z.
+Z <- returns_wide |> select(-date) |> scale()
+```
+
+```{r}
+# create correlation matrix from Z call it cor_Z. can skip cov step.
+cor_Z <- cor(Z)
+```
+
+```{r}
+# calculate eigenvalues and eigenvectors from corr_z
+eigen <- eigen(cor_Z)
+
+eigenvalues  <- eigen$values
+eigenvectors <- eigen$vectors
+
+var_explained     <- eigenvalues / sum(eigenvalues)
+cum_var_explained <- cumsum(var_explained)
+```
+
+```{r}
+# plot eigenvalues on line graph largest - smallest. x-axis; eigenvector #, y-axis; % variance explained
+eigen_data <- data.frame(eigenvalue = eigenvalues, percent_var = var_explained * 100 
+)
+
+#order largest-smallest
+eigen_data <- eigen_data[order(eigen_data$eigenvalue), ]
+
+ggplot(eigen_data, aes(x = eigenvalue, y = percent_var)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "red", size = 3) +
+  labs(
+    title = "Eigenvalue vs. Percentage of Variance Explained",
+    x = "Eigenvalue",
+    y = "% Variance Explained"
+  ) +
+  theme_classic()
+```
+
+```{r}
+#plot eigenvalues again, this time y-axis is % variance explained by eigenvalues 1->n, x-axis is # eigenvalues included
+
+```
+
+```{r}
+# choose k eigenvectors based on previous 2 outputs.create a matrix called V including only eigenvectors 1->k
+
+```
+
+```{r}
+# dot product - multiply Z with V. these are the principal components. call it PC_M
+
+```
+
+```{r}
+# double check PC_M has same time period as Z
+
+```
+
+```{r}
+# run OLS on every asset in portfolio. to do so use a loop.
+# follows the structure: model <- lm(Asset1 ~ PC1 + PC2 + PC3, data = df) 
+
+```
+
+
+
+# compare
+
+```{r}
+#CAPM
+
+```
+
+```{r}
+# fara and french 3 factor
+
+```
+
+```{r}
+# fara and french 5 factor
+
+```
+
+
+
+
+
+
+
+
+

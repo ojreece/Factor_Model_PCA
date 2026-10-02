@@ -180,10 +180,13 @@ PC_Model <- lm(A_train ~ factor_scores_train)
 
 betas <- coef(PC_Model)[-1, ] 
 rownames(betas) <- paste0("PC", 1:K)
-
 ```
 
-
+```{r}
+library(psych)
+principal(cor_A, 14) 
+#at k=30, cum var = 65%
+```
 Notes:
 SS Loadings = eigenvectors for each PC --> amount of total variance in the original variables captured by that component.
 proportion var = % of total dataset variance explained by PC
