@@ -61,31 +61,51 @@ cum_var_explained <- cumsum(var_explained)
 ```
 
 ```{r}
-# plot eigenvalues on line graph largest - smallest. x-axis; eigenvector #, y-axis; % variance explained
-eigen_data <- data.frame(eigenvalue = eigenvalues, percent_var = var_explained * 100 
+#update: line graph not to be used. scree plot is for eigenvalues 
+#https://www.r-bloggers.com/2023/10/creating-a-scree-plot-in-base-r/
+#update: use tibble() not data.frame() for cleaner/better output.
+#https://www.listendata.com/2024/05/tibble-vs-dataframe-with-examples.html
+
+scree_df <- tibble(
+  PC = paste0("PC", 1:length(eigenvalues)),
+  num_pc = 1:length(eigenvalues),
+  VarExplained = var_explained,
+  CumVar = cum_var_explained
 )
 
-#order largest-smallest
-eigen_data <- eigen_data[order(eigen_data$eigenvalue), ]
-
-ggplot(eigen_data, aes(x = eigenvalue, y = percent_var)) +
+ggplot(scree_df, aes(x = num_pc, y = VarExplained)) +
   geom_line(color = "blue", size = 1) +
   geom_point(color = "red", size = 3) +
+  scale_x_continuous(breaks = 1:3) +
+  scale_y_continuous(labels = scales::percent) +
   labs(
-    title = "Eigenvalue vs. Percentage of Variance Explained",
-    x = "Eigenvalue",
+    title = "Percent Variance Explained",
+    x = "Eigenvector # (Principal Component)",
+    y = "% Variance Explained"
+  ) +
+  theme_classic()
+```
+
+
+```{r}
+# choose k eigenvectors based on previous outputs.
+ggplot(scree_df, aes(x = num_pc, y = VarExplained)) +
+  geom_line(color = "grey", size = 1) +
+  geom_point(color = "grey42", size = 3) +
+  geom_vline(xintercept = 2, colour = "red", linetype = "dashed") +
+  scale_x_continuous(breaks = 1:3) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Percent Variance Explained",
+    subtitle = "K = 2 explains ~80% of the variance",
+    x = "Eigenvector # (Principal Component)",
     y = "% Variance Explained"
   ) +
   theme_classic()
 ```
 
 ```{r}
-#plot eigenvalues again, this time y-axis is % variance explained by eigenvalues 1->n, x-axis is # eigenvalues included
-
-```
-
-```{r}
-# choose k eigenvectors based on previous 2 outputs.create a matrix called V including only eigenvectors 1->k
+#create a matrix called V including only eigenvectors 1->k
 
 ```
 
@@ -107,7 +127,7 @@ ggplot(eigen_data, aes(x = eigenvalue, y = percent_var)) +
 
 
 
-# compare
+# comparison: Investment Applications Theory Applied 
 
 ```{r}
 #CAPM
@@ -125,6 +145,11 @@ ggplot(eigen_data, aes(x = eigenvalue, y = percent_var)) +
 ```
 
 
+# comparison: derived from conversation with prof. cheah (FMR-A):
+```{r}
+#original factor model w/ 3 stocks but add T-Bills
+```
+ 
 
 
 
