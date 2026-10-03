@@ -106,25 +106,62 @@ ggplot(scree_df, aes(x = num_pc, y = VarExplained)) +
 
 ```{r}
 #create a matrix called V including only eigenvectors 1->k
-
+V <- eigenvectors[, 1:2]
 ```
 
 ```{r}
 # dot product - multiply Z with V. these are the principal components. call it PC_M
-
+# a*b = (a1b1)+(a2b2)+...+(anbn)
+PC_M <- Z %*% V
 ```
 
 ```{r}
 # double check PC_M has same time period as Z
 
+PC_M_df <- as_tibble(PC_M) |> 
+  mutate(date = returns_wide$date) |>
+  relocate(date) # Moves date to the first column
+
+colnames(PC_M_df) <- c("date", "PC1", "PC2")
+
+head(PC_M_df)
 ```
 
 ```{r}
 # run OLS on every asset in portfolio. to do so use a loop.
 # follows the structure: model <- lm(Asset1 ~ PC1 + PC2 + PC3, data = df) 
+model_data <- returns_wide |> inner_join(PC_M_df, by = "date")
 
+model_goog <- lm(GOOG ~ PC1 + PC2, data = model_data)
+model_bg   <- lm(BG ~ PC1 + PC2, data = model_data)
+model_rtx  <- lm(RTX ~ PC1 + PC2, data = model_data)
+
+summary(model_goog)
 ```
 
+```{r}
+#install.packages("stargazer")
+library(stargazer)
+
+stargazer(model_goog, model_bg, model_rtx, type = "text", title = "PCA Beta Output")
+```
+
+# Understanding the Betas:
+PC1:overall market trend, pc2 constant
+- all 3 move with the market. 
+- BG, RTX more sensitive to overall market than GOOG --> likely a size story. 
+
+PC2: Industry trends, pc1 constant 
+- when pc2 is positive, tech outperforms non-tech. 
+- rtx is closer to tech than bg so has a weaker negative beta.
+
+Constants: pc, pc2 constant
+- goog outperforms, but all 3 expected to increase
+
+R squared:
+- high explanatory power for goog and bg. 
+- low explanatory power for rtx. 
+- likely bc government contracts, wars, media, etc. cause rapid shocks that affect defense in ways other sectors don't experience.
 
 
 # comparison: Investment Applications Theory Applied 
